@@ -1,0 +1,91 @@
+﻿<Window x:Class="TZ_Robo.CustomizesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TZ_Robo"
+        mc:Ignorable="d"
+        Title="Настройки" Height="450" Width="850" WindowStartupLocation="CenterOwner" WindowStyle="ToolWindow"
+        DataContext="{Binding Main, Source={StaticResource Locator}}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="170">
+            </ColumnDefinition>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <ListView Name="UnitsList" ItemsSource="{Binding Units}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Unit">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=Name}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Start">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DateStart, StringFormat=dd.MM.yyyy}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="End">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DateEnd, StringFormat=dd.MM.yyyy}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Border BorderBrush="Black" BorderThickness="1" Grid.RowSpan="1"/>
+            <Border BorderBrush="Black" BorderThickness="1" Grid.Row="1" Grid.RowSpan="2"/>
+            <StackPanel Grid.Row="0">
+                <Button Content="Добавить Unit" HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5"
+                        Command="{Binding AddUnit}"/>
+                <Button Content="Редактировать Unit"  HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5"
+                        Command="{Binding EditUnit}"
+                        CommandParameter="{Binding ElementName=UnitsList, Path=SelectedItem}"/>
+                <Button Content="Удалить Unit" HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5"
+                        Command="{Binding DeleteUnit}"
+                        CommandParameter="{Binding ElementName=UnitsList, Path=SelectedItem}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1">
+                <Button Name="AddAlfamos2"
+                    Content="Указать путь к Alfamos2 " HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5" Command="{Binding AddAlfamos2Command}"/>
+                <Button Name="AddAlfamos4"
+                    Content="Указать путь к Alfamos4" HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5" Command="{Binding AddAlfamos4Command}"/>
+            </StackPanel>
+        </Grid>
+
+        <ListView Name="PCCOMM_Path" Grid.Column="2" ItemsSource="{Binding Paths}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Сенс">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding SessionName}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Путь">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path}" TextWrapping="WrapWithOverflow"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</Window>

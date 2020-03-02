@@ -1,0 +1,24 @@
+﻿<Window x:Class="TZ_Robo.InputTextbox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TZ_Robo"
+        mc:Ignorable="d"
+        Title="InputTextBox" Height="100" Width="300" 
+        DataContext="{Binding Main, Source={StaticResource Locator}}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBox Name="inputTextBox" Margin="5" Text="{Binding UserInput}"/>
+        <Button x:Name="OK_Btn" HorizontalAlignment="Left" Content="OK" 
+                Grid.Row="1" Width="70"
+                Margin="5" IsDefault="True" Click="OK_Btn_Click"
+                />
+        <Button x:Name="Cancel_Btn" HorizontalAlignment="Right" Content="Cancel" 
+                Grid.Row="1" Width="70"
+                Margin="5" IsCancel="True"/>
+    </Grid>
+</Window>
