@@ -1,8 +1,13 @@
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using Microsoft.Win32;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Windows;
 using TZ_Robo.Model;
+using TZ_Robo.Model.Entities;
 
 namespace TZ_Robo.ViewModel
 {
@@ -53,24 +58,22 @@ namespace TZ_Robo.ViewModel
             AddAlfamos2Command = new RelayCommand(() => AddAlfamos(DataProvider.SesionName.Alfamos2));
             AddAlfamos4Command = new RelayCommand(() => AddAlfamos(DataProvider.SesionName.Alfamos4));
 
-            Upload = new RelayCommand(() =>
-            {
-
-            });
+            Upload = new RelayCommand(GetReport);
 
             AddUnit = new RelayCommand(() =>
             {
                 InputUnitBox inputBox = new InputUnitBox();
                 if (inputBox.ShowDialog() == true && !string.IsNullOrEmpty(UserInputUnit.Name))
                 {
-                    DataProvider.AddUnitAsync(new Unit()
+                    Unit newUnit = new Unit()
                     {
                         Name = UserInputUnit.Name,
                         DateStart = UserInputUnit.DateStart,
                         DateEnd = UserInputUnit.DateEnd
-                    });
+                    };
+                    DataProvider.AddUnitAsync(newUnit);
+                    Units.Add(newUnit);
                 }
-                Units.Add(UserInputUnit);
                 UserInputUnit = new Unit();
                 RaisePropertyChanged(nameof(UserInput));
             });
@@ -133,6 +136,54 @@ namespace TZ_Robo.ViewModel
                     SessionName = session.ToString()
                 });
             }
+        }
+
+        #endregion
+
+
+        #region Сгенерировать выписку
+
+        private void GetReport()
+        {
+            #region узнаем у пользователя путь к файлу
+            OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Filter = "Excel File (*.xlsx)|*.xlsx";
+            if (fileDialog.ShowDialog() != true) return;
+            #endregion
+
+            #region подготовка к работе
+            PCCOMM_Path alfamos2 = Paths.FirstOrDefault(i => i.SessionName == "Alfamos2");
+            PCCOMM_Path alfamos4 = Paths.FirstOrDefault(i => i.SessionName == "Alfamos4");
+            if (alfamos2 == null || alfamos4 == null)
+            {
+                MessageBox.Show("Не указан путь к alfamos2 или alfamos4. Пожалуйста, перейдите в настройки и настройте пути", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                return;
+            }
+
+            EquationWorker equation = new EquationWorker(alfamos2, alfamos4);
+            ExcelWorker excel = new ExcelWorker(new FileInfo(fileDialog.FileName));
+            List<Account> accounts = new List<Account>();
+            #endregion
+
+            #region Получить все счета из файла
+            accounts = excel.ReadForAccounts().Select(i => new Account{Number = i}).ToList();
+            #endregion
+
+            #region Получить доп. информацию о счетах (дата открытия/закрытия)
+            char connectedChar = equation.getConnectionTest();
+            equation.FillAccounts(accounts, connectedChar);
+
+            #endregion
+
+            #region Генерировать выписку
+
+            #endregion
+
+            #region Сохранить Excel-файл
+
+            #endregion
+
+
         }
 
         #endregion

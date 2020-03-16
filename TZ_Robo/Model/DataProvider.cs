@@ -49,7 +49,7 @@ namespace TZ_Robo.Model
 
         public void DeleteUnit(Unit unit)
         {
-            _dbContext.UnitsSet.Remove(_dbContext.UnitsSet.FirstOrDefault(i => i.Name == unit.Name));
+            _dbContext.UnitsSet.Remove(unit);
             _dbContext.SaveChanges();
         }
 
