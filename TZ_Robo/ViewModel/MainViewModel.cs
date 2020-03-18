@@ -1,10 +1,13 @@
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using TZ_Robo.Model;
 using TZ_Robo.Model.Entities;
@@ -38,7 +41,7 @@ namespace TZ_Robo.ViewModel
         public RelayCommand AddUnit { get; set; }
         public RelayCommand<Unit> DeleteUnit { get; set; }
         public RelayCommand<Unit> EditUnit { get; set; }
-        
+
         #endregion
 
         public MainViewModel()
@@ -154,38 +157,93 @@ namespace TZ_Robo.ViewModel
             #region подготовка к работе
             PCCOMM_Path alfamos2 = Paths.FirstOrDefault(i => i.SessionName == "Alfamos2");
             PCCOMM_Path alfamos4 = Paths.FirstOrDefault(i => i.SessionName == "Alfamos4");
+            PCCOMM_Path pcscm = Paths.FirstOrDefault(i => i.SessionName == "pcscm");
+            Process currentAlfamos;
             if (alfamos2 == null || alfamos4 == null)
             {
                 MessageBox.Show("Не указан путь к alfamos2 или alfamos4. Пожалуйста, перейдите в настройки и настройте пути", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 return;
             }
 
-            EquationWorker equation = new EquationWorker(alfamos2, alfamos4);
+            EquationWorker equation = new EquationWorker(alfamos2, alfamos4, pcscm);
             ExcelWorker excel = new ExcelWorker(new FileInfo(fileDialog.FileName));
             List<Account> accounts = new List<Account>();
             #endregion
 
             #region Получить все счета из файла
-            accounts = excel.ReadForAccounts().Select(i => new Account{Number = i}).ToList();
+            accounts = excel.ReadForAccounts().Select(i => new Account { Number = i }).ToList();
             #endregion
 
             #region Получить доп. информацию о счетах (дата открытия/закрытия)
-            char connectedChar = equation.getConnectionTest();
+
+            char connectedChar = equation.OpenConnection(alfamos4, out currentAlfamos);
             equation.FillAccounts(accounts, connectedChar);
+            equation.GetUserProfile(connectedChar);
+            currentAlfamos.CloseMainWindow();
+            currentAlfamos.WaitForExit(5000);
 
             #endregion
 
             #region Генерировать выписку
 
+
+            foreach (Account acc in accounts)
+            {
+                List<Operation> AccountOperations = new List<Operation>();
+                #region получение списка юнитов для каждого счета
+                DateTime startDate = acc.OpenedDate;
+                bool done = false;
+                while (!done)
+                {
+                    done = true;
+                    foreach (Unit unit in Units)
+                    {
+                        if (unit.DateStart <= startDate &&
+                            unit.DateEnd >= startDate)
+                        {
+                            acc.Units.Add(unit);
+                            startDate = unit.DateEnd.AddDays(1);
+                            done = false;
+                        }
+                    }
+
+                    if (acc.Units.Count < 1)
+                    {
+                        MessageBox.Show($"Для счета {acc.Number} отсутствует один или несколько юнитов. Не найдено вхождения для даты {startDate.ToString("dd.MM.yyyy")}", "Не укаан юнит", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    }
+                }
+                #endregion
+
+                #region выгрузка TZ
+                //Для каждого юнита
+                //Запускаем EQ
+                //Проверяем наличие оборота за период
+                //При наличии оборота - выгружаем TZ, при отсутствии закрываем EQ
+                //Загружаем данные об операциях из файла xlsx
+                foreach (Unit unit in acc.Units)
+                {
+                    equation.OpenConnection(alfamos2, out currentAlfamos);
+                    equation.EnterUnit(unit);
+                    if (equation.CheckForTurnover(acc))//если по счету есть оборот
+                    {
+                        AccountOperations.AddRange(equation.GetOperations(acc, currentAlfamos));
+                    }
+                }
+
+
+
+                #endregion
+
+                #endregion
+
+                #region Сохранить Excel-файл
+                excel.GenerateTz(AccountOperations, $@"{Path.GetDirectoryName(fileDialog.FileName)}\{acc.Number}Res.xlsx");
+                #endregion
+
+
+            }
+
             #endregion
-
-            #region Сохранить Excel-файл
-
-            #endregion
-
-
         }
-
-        #endregion
     }
 }

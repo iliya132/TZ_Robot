@@ -102,6 +102,7 @@
     <Compile Include="Model\ConfiguresContext.cs" />
     <Compile Include="Model\DataProvider.cs" />
     <Compile Include="Model\Entities\Account.cs" />
+    <Compile Include="Model\Entities\Operation.cs" />
     <Compile Include="Model\EquationWorker.cs" />
     <Compile Include="Model\ExcelWorker.cs" />
     <Compile Include="Model\PCCOMM_Path.cs" />

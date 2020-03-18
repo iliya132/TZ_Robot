@@ -11,5 +11,7 @@ namespace TZ_Robo.Model.Entities
         public string Number { get; set; }
         public DateTime OpenedDate { get; set; }
         public DateTime ClosedDate { get; set; }
+        private List<Unit> _units = new List<Unit>();
+        public List<Unit> Units { get=>_units; set=>_units=value; }
     }
 }
