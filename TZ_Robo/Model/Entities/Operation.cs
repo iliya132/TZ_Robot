@@ -24,5 +24,6 @@ namespace TZ_Robo.Model.Entities
         public string CreditSum { get; set; }
         public string Comment { get; set; }
         public string Comment2 { get; set; }
+        public bool IsEdited { get; set; }
     }
 }

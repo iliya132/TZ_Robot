@@ -30,6 +30,7 @@ namespace TZ_Robo.ViewModel
         private Unit _userInputUnit = new Unit();
         public Unit UserInputUnit { get => _userInputUnit; set => _userInputUnit = value; }
         public string oldUnitName { get; set; }
+        public string Log { get; set; }
         #endregion
 
         DataProvider DataProvider = new DataProvider();
@@ -39,6 +40,7 @@ namespace TZ_Robo.ViewModel
         public RelayCommand AddAlfamos4Command { get; set; }
         public RelayCommand Upload { get; set; }
         public RelayCommand AddUnit { get; set; }
+        public RelayCommand AddPCSCM { get; set; }
         public RelayCommand<Unit> DeleteUnit { get; set; }
         public RelayCommand<Unit> EditUnit { get; set; }
 
@@ -48,7 +50,7 @@ namespace TZ_Robo.ViewModel
         {
             CollectionsInit();
             CommandsInit();
-
+            Log = "Готов к работе";
         }
 
         #region Initialization
@@ -60,6 +62,7 @@ namespace TZ_Robo.ViewModel
         {
             AddAlfamos2Command = new RelayCommand(() => AddAlfamos(DataProvider.SesionName.Alfamos2));
             AddAlfamos4Command = new RelayCommand(() => AddAlfamos(DataProvider.SesionName.Alfamos4));
+            AddPCSCM = new RelayCommand(() => AddAlfamos(DataProvider.SesionName.PCSCM));
 
             Upload = new RelayCommand(GetReport);
 
@@ -118,7 +121,7 @@ namespace TZ_Robo.ViewModel
         private void AddAlfamos(DataProvider.SesionName session)
         {
             OpenFileDialog fileDialog = new OpenFileDialog();
-            fileDialog.Filter = $"{session.ToString()}.ws | {session.ToString()}.ws";
+            fileDialog.Filter = $"{session.ToString()} | {session.ToString()}.ws;{session.ToString()}.exe";
             if (fileDialog.ShowDialog() == true)
             {
                 for (int i = 0; i < Paths.Count; i++)
@@ -148,12 +151,14 @@ namespace TZ_Robo.ViewModel
 
         private void GetReport()
         {
+            Log = string.Empty;
             #region узнаем у пользователя путь к файлу
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.Filter = "Excel File (*.xlsx)|*.xlsx";
             if (fileDialog.ShowDialog() != true) return;
             #endregion
-
+            AddToLog("Получена команда на работу.");
+            AddToLog($"Обработка файла {fileDialog.FileName}.");
             #region подготовка к работе
             PCCOMM_Path alfamos2 = Paths.FirstOrDefault(i => i.SessionName == "Alfamos2");
             PCCOMM_Path alfamos4 = Paths.FirstOrDefault(i => i.SessionName == "Alfamos4");
@@ -162,6 +167,12 @@ namespace TZ_Robo.ViewModel
             if (alfamos2 == null || alfamos4 == null)
             {
                 MessageBox.Show("Не указан путь к alfamos2 или alfamos4. Пожалуйста, перейдите в настройки и настройте пути", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                if (alfamos2 == null)
+                    AddToLog("Не указан путь к alfamos2");
+                if (alfamos4 == null)
+                    AddToLog("Не указан путь к alfamos4");
+                if (pcscm == null)
+                    AddToLog("Не указан путь к pcscm");
                 return;
             }
 
@@ -171,25 +182,34 @@ namespace TZ_Robo.ViewModel
             #endregion
 
             #region Получить все счета из файла
+            AddToLog("Чтение счетов из исходного файла.");
             accounts = excel.ReadForAccounts().Select(i => new Account { Number = i }).ToList();
             #endregion
-
+            AddToLog("Завершено.");
+            AddToLog("Получение дополнительных сведений о счетах из боевого EQ.");
             #region Получить доп. информацию о счетах (дата открытия/закрытия)
-
+            AddToLog("  Устанавливаю соединение.");
             char connectedChar = equation.OpenConnection(alfamos4, out currentAlfamos);
+            AddToLog("  Ищем информацию.");
             equation.FillAccounts(accounts, connectedChar);
+            AddToLog("  Сведения о пользователе.");
             equation.GetUserProfile(connectedChar);
+            AddToLog("  Закрываю соединение.");
             currentAlfamos.CloseMainWindow();
             currentAlfamos.WaitForExit(5000);
+            AddToLog("Завершено.");
+
 
             #endregion
 
             #region Генерировать выписку
 
-
+            int l = 1;
             foreach (Account acc in accounts)
             {
                 List<Operation> AccountOperations = new List<Operation>();
+
+                AddToLog($"Счет {l++}/{accounts.Count}.");
                 #region получение списка юнитов для каждого счета
                 DateTime startDate = acc.OpenedDate;
                 bool done = false;
@@ -220,30 +240,49 @@ namespace TZ_Robo.ViewModel
                 //Проверяем наличие оборота за период
                 //При наличии оборота - выгружаем TZ, при отсутствии закрываем EQ
                 //Загружаем данные об операциях из файла xlsx
+
                 foreach (Unit unit in acc.Units)
                 {
+                    AddToLog($" Выгрузка TZ - unit {unit.Name}.");
                     equation.OpenConnection(alfamos2, out currentAlfamos);
                     equation.EnterUnit(unit);
                     if (equation.CheckForTurnover(acc))//если по счету есть оборот
                     {
-                        AccountOperations.AddRange(equation.GetOperations(acc, currentAlfamos));
+                        AccountOperations.AddRange(equation.GetOperations(acc, currentAlfamos, unit));
                     }
                 }
-
-
-
                 #endregion
-
-                #endregion
-
+                AddToLog($"Сохраняю в .xlsx. {Path.GetDirectoryName(fileDialog.FileName)}\\{ acc.Number}Res.xlsx");
                 #region Сохранить Excel-файл
                 excel.GenerateTz(AccountOperations, $@"{Path.GetDirectoryName(fileDialog.FileName)}\{acc.Number}Res.xlsx");
                 #endregion
-
-
             }
+            #endregion
+
 
             #endregion
+
+            #region cleanup
+            AddToLog("Формирование выписок завершено. Прибираемся...");
+            foreach(Process process in Process.GetProcessesByName("pcscm"))
+            {
+                process.Kill();
+            }
+
+            foreach (Process process in Process.GetProcessesByName("pcsws"))
+            {
+                process.Kill();
+            }
+            #endregion
+            AddToLog("Готов к работе.");
+
         }
+        private void AddToLog(string message)
+        {
+            Log = $"{message}\r\n{Log}";
+            RaisePropertyChanged("Log");
+        }
+
+        
     }
 }

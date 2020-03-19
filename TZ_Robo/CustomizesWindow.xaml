@@ -64,6 +64,8 @@
                     Content="Указать путь к Alfamos2 " HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5" Command="{Binding AddAlfamos2Command}"/>
                 <Button Name="AddAlfamos4"
                     Content="Указать путь к Alfamos4" HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5" Command="{Binding AddAlfamos4Command}"/>
+                <Button Name="AddPscsm"
+                    Content="Указать путь к pcscm" HorizontalAlignment="Left" Height="40" Width="150" Margin="10,5,10,5" Command="{Binding AddPCSCM}"/>
             </StackPanel>
         </Grid>
 

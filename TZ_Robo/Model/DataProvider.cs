@@ -9,7 +9,8 @@ namespace TZ_Robo.Model
         public enum SesionName
         {
             Alfamos2 = 0,
-            Alfamos4 = 1
+            Alfamos4 = 1,
+            PCSCM = 2
         }
         ConfiguresContext _dbContext;
         public DataProvider()

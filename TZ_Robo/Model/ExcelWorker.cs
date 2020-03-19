@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -104,7 +105,7 @@ namespace TZ_Robo.Model
                 }
                 else
                 {
-                    operations.Add(new Operation());
+                    operations.Add(new Operation { Number = string.Empty});
                 }
             }
             return operations;
@@ -157,6 +158,11 @@ namespace TZ_Robo.Model
                     sheet.Cells[row, col++].Value = operation.CreditSum;
                     sheet.Cells[row, col++].Value = operation.Comment;
                     sheet.Cells[row, col++].Value = operation.Comment2;
+                    if (operation.IsEdited)
+                    {
+                        sheet.Row(row).Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        sheet.Row(row).Style.Fill.BackgroundColor.SetColor(Color.Orange);
+                    }
                     row++;
                 }
                 #endregion

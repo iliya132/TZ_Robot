@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TZ_Robo"
         mc:Ignorable="d"
-        Title="TZ_Robot" Height="150" Width="800" DataContext="{Binding Main, Source={StaticResource Locator}}">
+        Title="TZ_Robot" Height="363" Width="800" DataContext="{Binding Main, Source={StaticResource Locator}}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="2*"/>
             <RowDefinition Height="2*"/>
+            <RowDefinition Height="11*"/>
         </Grid.RowDefinitions>
         <Menu Grid.Row="0">
             <MenuItem Header="Файл">
@@ -24,5 +25,9 @@
                 <Image Source="Res/load.png" Margin="5"/>
             </Button>
         </StackPanel>
+        <Grid Grid.Row="3" Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+            <Border BorderThickness="1" BorderBrush="Black"/>
+        </Grid>
+        <TextBlock Name="LogBox" Text="{Binding Log}" Grid.Row="3" FontSize="16" Margin="10" />
     </Grid>
 </Window>
